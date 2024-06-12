@@ -93,7 +93,7 @@ db.once("open", () => {
  * =====================================================================
  */
 
-app.set("port", process.env.PORT || 3000);
+app.set("port", process.env.PORT || 3001);
 
 // ejs 레이아웃 렌더링
 app.set("view engine", "ejs"); // ejs를 사용하기 위한 애플리케이션 세팅
@@ -126,7 +126,11 @@ router.get("/transportation", pagesController.showTransportation); // 교통수�
  * Listing 23.2 (p. 335)
  * app.js로 로그인 라우트를 추가
  */
-
+router.get("/users/login", usersController.login);
+router.post("/users/login",
+  usersController.authenticate,
+  usersController.redirectView
+);
 /**
  * Users
  */

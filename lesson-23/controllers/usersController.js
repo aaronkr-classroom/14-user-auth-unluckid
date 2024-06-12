@@ -1,6 +1,7 @@
 // controllers/usersController.js
 "use strict";
 
+
 /**
  * Listing 18.11 (p. 271)
  * userController.js에서 인덱스 액션 생성과 index 액션의 재방문
@@ -31,11 +32,43 @@ module.exports = {
    * Listing 23.3 (p. 336)
    * userController.js로의 로그인과 인증 액션 추가
    */
-
+  login: (req, res) => {
+    res.render("users/login", {
+      page: "login",
+      title: "Login Page",
+    });
+  },
   /**
    * @TODO: authenticate 액션
    */
-
+  authenticate: (req, res, next) => {
+    User.findOne({ email: req.body.email })
+      .then(user => {
+        if (user) {
+          user.passwordCompare(req.body.password)
+            .then(pwMatch => {
+              if (pwMatch) {
+                res.locals.redirect = `/users/${user._id}`;
+                res.locals.user = user;
+                req.flash("success", "로그인 성공!");
+              } else {
+                res.locals.redirect = "/users/login";
+                req.flash("error", "비밀번호가 일치하지 않습니다!");
+              }
+              next();
+            })
+        } else {
+          res.locals.redirect = "/users/login";
+          req.flash("error", "사용자 계정을 찾을 수 없습니다!");
+          next();
+        }
+      })
+      .catch(error => {
+        console.log(`로그인 중 오류 발생: ${error.message}`);
+        next(error);
+      });
+  },
+  
   index: (req, res, next) => {
     User.find() // index 액션에서만 퀴리 실행
       .then((users) => {
@@ -108,7 +141,33 @@ module.exports = {
         next(error);
       });
   },
+  validate:(req,res,next) =>{
+  req 
+    .sanitizeBody("email")
+    .normalizeEmail({
+      all_lowercase: true
+    })
+    .trim()
+    req.check("email", "Email is invalid").isEmail();
 
+  req
+    .check("password", "Password cannot be empty.")
+    .notEmpty();
+  req.getValidationResult()
+    .then(result => {
+      if(!result.isEmpty()){
+        let message = result.array().map(m =>m.msg);
+        res.locals.redirect = "/users/new";
+        req.skip = true;
+        req.flash("error",messages.join(" and"));
+      }
+      next();
+    })
+    .catch(error =>{
+      console.log(`Validation error: ${error.message}`);
+      next(error);
+      });
+  },
   /**
    * @TODO: validate 액션
    *
