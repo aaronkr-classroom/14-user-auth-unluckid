@@ -15,7 +15,7 @@ const express = require("express"), // express를 요청
 // controllers 폴더의 파일을 요청
 const pagesController = require("./controllers/pagesController"),
   subscribersController = require("./controllers/subscribersController"),
-  usersController = require("./controllers/usersController.TODO"),
+  usersController = require("./controllers/usersController"),
   coursesController = require("./controllers/coursesController"),
   talksController = require("./controllers/talksController"),
   trainsController = require("./controllers/trainsController"),
@@ -73,7 +73,9 @@ router.use(connectFlash()); // connect-flash 미들웨어를 사용
 // passport를 요청
 // passport를 초기화
 // passport가 Express.js 내 세션을 사용하도록 설정
-
+const passport = require("passport");
+router.use(passport.initialize());
+router.use(passport.session());
 /**
  * @TODO: 
  * 
@@ -84,7 +86,10 @@ router.use(connectFlash()); // connect-flash 미들웨어를 사용
 // User 모델의 인증 전략을 passport에 전달
 // User 모델의 직렬화 메서드를 passport에 전달
 // User 모델의 역직렬화 메서드를 passport에 전달
-
+const User = require("./models/user");
+passport.use(User.createStrategy());
+passport.serializeUser(User.serializeUser());
+passport.deserializeUser(User.deserializeUser());
 /**
  * Listing 22.2 (p. 327)
  * 응답상에서 connectFlash와 미들웨어와의 연계
@@ -100,6 +105,8 @@ router.use((req, res, next) => {
    * 사용자 정의 미들웨어로 로컬 변수 추가
    */
   // 로그인 여부를 확인하는 불리언 값을 로컬 변수에 추가
+  res.locals.loggedIn = req.isAuthenticated();
+  res.locals.currentUser = req.user;
   // 현재 사용자를 로컬 변수에 추가
   next();
 });
@@ -134,7 +141,7 @@ db.once("open", () => {
  * =====================================================================
  */
 
-app.set("port", process.env.PORT || 3000);
+app.set("port", process.env.PORT || 3003);
 
 // ejs 레이아웃 렌더링
 app.set("view engine", "ejs"); // ejs를 사용하기 위한 애플리케이션 세팅

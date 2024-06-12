@@ -6,7 +6,7 @@
  * userController.js에서 인덱스 액션 생성과 index 액션의 재방문
  */
 const passport = require("passport"),
-  User = require("../models/User.TODO"); // 사용자 모델 요청
+  User = require("../models/user"); // 사용자 모델 요청
 
 /**
  * Listing 22.3 (p. 328)
@@ -47,7 +47,12 @@ module.exports = {
    * usersController.js에서 passport 인증 미들웨어 추가
    * 원래 있는 코드는 다 지우고 아래 코드로 대체
    */
-
+authenticate: passport.authenticate("local", {
+  failureRedirect: "/users/login",
+  failureFlash: "failed to login.",
+  successRedirect: "/",
+  successFlash: "Logged in!"
+}),
   // local strategy로 사용자를 인증하기 위해 passport 호출
   // authenticate: {...}  
   // passport의 authenticate 메소드를 사용해 사용자 인증
@@ -59,7 +64,14 @@ module.exports = {
    * usersController.js에서 logout 액션 추가
    */
   // logout: {...}
-
+logout: (req,res,next) => {
+  req.logout(() => {
+    console.log("log out");
+  });
+  req.flash("success", "you have been logged out!");
+  res.locals.redirect = "/";
+  next();
+},
   index: (req, res, next) => {
     User.find() // index 액션에서만 퀴리 실행
       .then((users) => {
@@ -122,8 +134,18 @@ module.exports = {
      * 원래 있는 코드는 다 지우고 아래 코드로 대체
      */
     // User.register();
-  },
-
+ 
+User.register(newUser,req.body.password, (err, user) => {
+  if (user){
+    res.locals.redirect = "/users";
+    req.flash("success", "Account created!");
+  }else {
+    res.locals.redirect = "/users/new";
+    req.flash("error", "failed to created account!");
+  }
+  next();
+});
+},
   /**
    * Listing 23.7 (p. 346)
    * userController.js에서 validate 액션 추가
