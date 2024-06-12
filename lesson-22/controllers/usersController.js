@@ -71,28 +71,21 @@ module.exports = {
    * 메시지들을 연결했기 때문에 메시지들은 결국 응답 객체로 연결된다.
    */
   create: (req, res, next) => {
-    let userParams = {
-      name: {
-        first: req.body.first,
-        last: req.body.last,
-      },
-      email: req.body.email,
-      username: req.body.username,
-      password: req.body.password,
-      profileImg: req.body.profileImg,
-    };
+    let userParams = getUserParams(req.body) ;
     // @TODO: getUserParams 사용 - Listing 22.3 (p. 328)
     // 폼 파라미터로 사용자 생성
     User.create(userParams)
       .then((user) => {
         res.locals.redirect = "/users";
         res.locals.user = user;
+        req.flash("success",`${user.fullname}'s account created!`)
         // @TODO: 플래시 메시지 추가 - Listing 22.3 (p. 328)
         next();
       })
       .catch((error) => {
         console.log(`Error saving user: ${error.message}`);
         res.locals.redirect = "/users/new";
+        req.flash("error",`Could not create account: ${error.message}`)
         // @TODO: 플래시 메시지 추가 - Listing 22.3 (p. 328)
         next(error);
       });
@@ -161,16 +154,8 @@ module.exports = {
   update: (req, res, next) => {
     let userId = req.params.id,
       // @TODO: getUserParams 사용 - Listing 22.3 (p. 328)
-      userParams = {
-        name: {
-          first: req.body.first,
-          last: req.body.last,
-        },
-        email: req.body.email,
-        username: req.body.username,
-        password: req.body.password,
-        profileImg: req.body.profileImg,
-      }; // 요청으로부터 사용자 파라미터 취득
+      userParams = getUserParms(req.body);
+         // 요청으로부터 사용자 파라미터 취득
     User.findByIdAndUpdate(userId, {
       $set: userParams,
     }) //ID로 사용자를 찾아 단일 명령으로 레코드를 수정하기 위한 findByIdAndUpdate의 사용
@@ -183,8 +168,7 @@ module.exports = {
         console.log(`Error updating user by ID: ${error.message}`);
         next(error);
       });
-  },
-
+    },
   /**
    * Listing 20.9 (p. 298)
    * delete 액션의 추가
